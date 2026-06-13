@@ -1,0 +1,160 @@
+/* ===========================================================================
+   forum.css — Styles spécifiques aux pages (liste, fil, formulaires, auth)
+   =========================================================================== */
+
+/* ---- Hero / barre d'intro de la liste ---- */
+.lead {
+  display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 1rem;
+  padding: 2.2rem 0 1.2rem;
+}
+.lead h1 { font-size: clamp(1.9rem, 4vw, 2.8rem); }
+.lead p { margin: 0; color: var(--ink-soft); max-width: 46ch; }
+.lead__count {
+  font-family: var(--mono); font-size: .8rem; color: var(--ink-soft);
+  text-align: right;
+}
+.lead__count b { display: block; font-family: var(--display); font-size: 2rem; color: var(--coral); }
+
+/* ---- Barre de filtres ---- */
+.filters {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
+  padding: .8rem 0 1.2rem;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 1.2rem;
+}
+.filters .seg {
+  display: inline-flex; border: 1px solid var(--line); border-radius: var(--r);
+  overflow: hidden; background: var(--paper-2);
+}
+.filters .seg button {
+  font: inherit; font-family: var(--mono); font-size: .76rem;
+  padding: .4rem .8rem; border: 0; background: transparent; cursor: pointer;
+  color: var(--ink-soft);
+}
+.filters .seg button[aria-pressed="true"] { background: var(--blue); color: #fff; }
+.filters .tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-left: auto; }
+
+/* ---- Liste des topics ---- */
+.topics { list-style: none; margin: 0; padding: 0; display: grid; gap: .7rem; }
+
+.topic {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 1rem; align-items: center;
+  padding: 1rem 1.1rem;
+}
+
+/* Signature : épine du fil — le compteur de votes en rail gauche */
+.spine {
+  display: grid; place-items: center; gap: .1rem;
+  text-align: center;
+  border-right: 1px solid var(--line);
+  padding-right: 1rem; height: 100%;
+}
+.spine .n {
+  font-family: var(--display); font-weight: 700; font-size: 1.5rem;
+  color: var(--coral); line-height: 1;
+}
+.spine .l {
+  font-family: var(--mono); font-size: .58rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-soft);
+}
+
+.topic__body h3 { font-size: 1.12rem; margin-bottom: .25rem; }
+.topic__body h3 a { color: var(--ink); }
+.topic__body h3 a:hover { color: var(--blue); }
+.topic__tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .45rem; }
+
+.topic__stats {
+  display: grid; gap: .15rem; text-align: right;
+  font-family: var(--mono); font-size: .74rem; color: var(--ink-soft);
+  white-space: nowrap;
+}
+.topic__stats b { color: var(--ink); }
+
+/* ---- Page d'un fil (thread) ---- */
+.thread__head { padding: 2rem 0 1rem; }
+.crumbs { font-family: var(--mono); font-size: .76rem; color: var(--ink-soft); margin-bottom: .8rem; }
+.thread__head h1 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; }
+
+.post {
+  display: grid; grid-template-columns: 56px 1fr; gap: 1rem;
+  padding: 1.2rem 1.1rem; margin-bottom: 1rem;
+}
+.post--op { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue), var(--shadow); }
+.votecol {
+  display: grid; align-content: start; justify-items: center; gap: .2rem;
+}
+.votebtn {
+  width: 34px; height: 30px; display: grid; place-items: center;
+  border: 1px solid var(--line); background: var(--paper); border-radius: 8px;
+  cursor: pointer; color: var(--ink-soft); font-size: 1rem; line-height: 1;
+}
+.votebtn:hover { border-color: var(--coral); color: var(--coral); }
+.votebtn[aria-pressed="true"] { background: var(--coral); color: #fff; border-color: var(--coral); }
+.votecol .score { font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
+
+.post__head {
+  display: flex; align-items: center; gap: .6rem; margin-bottom: .5rem;
+  flex-wrap: wrap;
+}
+.post__head .who { font-family: var(--display); font-weight: 600; }
+.post__title { font-size: 1.15rem; margin: .1rem 0 .5rem; }
+.post__text { white-space: pre-wrap; }
+.post__actions {
+  display: flex; gap: .6rem; margin-top: .8rem;
+  font-family: var(--mono); font-size: .76rem;
+}
+.post__actions button {
+  background: none; border: 0; color: var(--ink-soft); cursor: pointer;
+  font: inherit; padding: 0;
+}
+.post__actions button:hover { color: var(--blue); }
+
+/* ---- Réponses imbriquées ---- */
+.responses { margin: .8rem 0 0; padding-left: 1rem; border-left: 2px solid var(--line); display: grid; gap: .7rem; }
+.response { display: grid; grid-template-columns: 28px 1fr; gap: .6rem; font-size: .92rem; }
+.response .ava { width: 28px; height: 28px; font-size: .72rem; border-radius: 7px; background: var(--ink-soft); }
+
+/* ---- Zone de saisie inline ---- */
+.replybox { margin-top: 1.2rem; display: grid; gap: .6rem; }
+.replybox .row { display: flex; gap: .6rem; justify-content: flex-end; }
+
+/* ---- Pagination ---- */
+.pager { display: flex; justify-content: center; gap: .4rem; margin: 1.6rem 0; }
+.pager button {
+  font-family: var(--mono); font-size: .82rem;
+  width: 38px; height: 38px; border-radius: 9px;
+  border: 1px solid var(--line); background: var(--paper-2); cursor: pointer; color: var(--ink);
+}
+.pager button[aria-current="true"] { background: var(--blue); color: #fff; border-color: var(--blue); }
+.pager button:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ---- Pages auth + nouveau sujet ---- */
+.panel {
+  max-width: 440px; margin: 3rem auto; padding: 2rem;
+}
+.panel--wide { max-width: 680px; }
+.panel h1 { font-size: 1.8rem; }
+.panel .form { display: grid; gap: 1rem; margin-top: 1.2rem; }
+.panel .alt { margin-top: 1.2rem; font-size: .88rem; color: var(--ink-soft); text-align: center; }
+.tagpicker { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+/* ---- État vide ---- */
+.empty {
+  text-align: center; padding: 3rem 1rem; color: var(--ink-soft);
+}
+.empty h3 { color: var(--ink); }
+
+/* ---- Skeleton chargement ---- */
+.skeleton { animation: pulse 1.2s ease-in-out infinite; }
+.sk-line { height: 14px; border-radius: 6px; background: var(--line); margin: .4rem 0; }
+@keyframes pulse { 50% { opacity: .45; } }
+
+@media (max-width: 640px) {
+  .topic { grid-template-columns: 52px 1fr; }
+  .topic__stats { display: none; }
+  .lead { grid-template-columns: 1fr; }
+  .lead__count { text-align: left; }
+  .post { grid-template-columns: 44px 1fr; }
+}

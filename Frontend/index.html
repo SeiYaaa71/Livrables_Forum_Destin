@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agora — forum de discussion</title>
+  <meta name="description" content="Agora, le forum : posez vos questions, lancez des sujets, votez les meilleures réponses." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/forum.css" />
+</head>
+<body>
+  <main class="wrap">
+    <section class="lead">
+      <div>
+        <h1>Le forum, sans bruit.</h1>
+        <p>Posez une question, ouvrez un débat, votez les réponses utiles. Lecture libre pour tous, participation pour les membres.</p>
+      </div>
+      <div class="lead__count">
+        <b id="count">—</b>
+        sujets ouverts
+      </div>
+    </section>
+
+    <section class="filters" aria-label="Filtres">
+      <div class="seg" id="sortSeg" role="group" aria-label="Trier">
+        <button data-sort="recent" aria-pressed="true">Récents</button>
+        <button data-sort="active" aria-pressed="false">Actifs</button>
+        <button data-sort="votes" aria-pressed="false">Votés</button>
+      </div>
+      <div class="tags" id="tagFilters" aria-label="Filtrer par tag"></div>
+    </section>
+
+    <ul class="topics" id="topics"></ul>
+    <nav class="pager" id="pager" aria-label="Pagination"></nav>
+  </main>
+
+  <script type="module" src="js/page-index.js"></script>
+</body>
+</html>

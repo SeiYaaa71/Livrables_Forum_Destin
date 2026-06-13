@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inscription — Agora</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/forum.css" />
+</head>
+<body>
+  <main class="wrap">
+    <section class="panel card">
+      <h1>Créer un compte</h1>
+      <p class="meta">Rejoignez la communauté pour lancer des sujets et répondre.</p>
+      <form class="form" id="registerForm" novalidate>
+        <div>
+          <label class="lbl" for="rUser">Nom d'utilisateur</label>
+          <input class="field" id="rUser" name="username" autocomplete="username" required />
+        </div>
+        <div>
+          <label class="lbl" for="rEmail">Email</label>
+          <input class="field" id="rEmail" name="email" type="email" autocomplete="email" required />
+        </div>
+        <div>
+          <label class="lbl" for="rPass">Mot de passe</label>
+          <input class="field" id="rPass" name="password" type="password" autocomplete="new-password" required />
+        </div>
+        <div>
+          <label class="lbl" for="rConfirm">Confirmer le mot de passe</label>
+          <input class="field" id="rConfirm" name="confirm" type="password" autocomplete="new-password" required />
+        </div>
+        <button class="btn" type="submit">S'inscrire</button>
+      </form>
+      <p class="alt">Déjà membre ? <a href="login.html">Se connecter</a></p>
+    </section>
+  </main>
+  <script type="module" src="js/page-auth.js"></script>
+</body>
+</html>

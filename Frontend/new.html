@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nouveau sujet — Agora</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/forum.css" />
+</head>
+<body>
+  <main class="wrap">
+    <section class="panel panel--wide card">
+      <h1>Ouvrir un sujet</h1>
+      <p class="meta">Un bon titre et un premier message clair attirent de meilleures réponses.</p>
+      <form class="form" id="newForm" novalidate>
+        <div>
+          <label class="lbl" for="nTitle">Titre du sujet</label>
+          <input class="field" id="nTitle" name="title" placeholder="Ex. Comment structurer routeur.go par ressource ?" required />
+        </div>
+        <div>
+          <label class="lbl" for="nBody">Premier message</label>
+          <textarea class="field" id="nBody" name="body" placeholder="Décrivez votre question ou votre sujet…" required></textarea>
+        </div>
+        <div>
+          <label class="lbl">Tags</label>
+          <div class="tagpicker" id="tagPicker"></div>
+        </div>
+        <div style="display:flex;gap:.6rem;justify-content:flex-end">
+          <a class="btn btn--ghost" href="index.html">Annuler</a>
+          <button class="btn btn--coral" type="submit">Publier le sujet</button>
+        </div>
+      </form>
+    </section>
+  </main>
+  <script type="module" src="js/page-auth.js"></script>
+</body>
+</html>
