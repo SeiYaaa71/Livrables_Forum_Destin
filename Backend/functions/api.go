@@ -6,47 +6,56 @@ import (
 	"log"
 )
 
-func CreateUser(Username string, Password string, Email string, db *sql.DB) {
+func CreateUser( db *sql.DB, Username string, Password string, Email string, PP string) (int64, error) {
 	hashedPassword, err := HashPassword(Password)
 	if err != nil {
-		return
+		return 0, err
 	}
 
-	query := "INSERT INTO Users (Name, Mail, Passworde) VALUES (?, ?, ?)"
-	_, err1 := db.Exec(query, Username, Email, hashedPassword)
+	query := "INSERT INTO Users (Name, Mail, Passworde, PP) VALUES (?, ?, ?, ?)"
+	result, err1 := db.Exec(query, Username, Email, hashedPassword, PP)
 
 	if err1 != nil {
 		log.Printf("Erreur création compte : %v", err1)
-	} else {
-		fmt.Printf("Compte '%s' créé !\n", Username)
-	}
+		// Il est impératif de retourner l'erreur ici pour arrêter l'exécution
+		return 0, err1 
+	} 
+    
+    fmt.Printf("Compte '%s' créé !\n", Username)
+	return result.LastInsertId()
 }
 
-func CreateTopic(Title string, UserID int, db*sql.DB) {
-	query := "INSTERT INTO topics (Titre, ID_User) Values (?, ?)"
+func CreateTopic(Title string, UserID int, db*sql.DB) (error) {
+	query := "INSERT INTO topics (Titre, ID_User) Values (?, ?)"
 
-	_,err := db.Exec(query, Title, UserID,)
+	_,err := db.Exec(query, Title, UserID)
 
 	if err != nil {
 		log.Printf("Erreur création topic : %v", err)
+		return err
 	} else {
 		fmt.Printf("Topic '%s' créé !\n", Title)
 	}
+
+	return nil
 }
 
-func CreatePost(TopicID int, Title string, Text string, UserID int, db*sql.DB) {
+func CreatePost(db*sql.DB, TopicID int, Title string, Text string, UserID int) (error) {
 
 	query := "INSERT INTO post (Titre, Text, ID_User, ID_Topic) Values (?, ?, ?, ?)"
 	_,err := db.Exec(query, Title, Text, UserID, TopicID)
 
 	if err != nil {
 		log.Printf("Erreur création post : %v", err)
+		return err
 	} else {
 		fmt.Printf("Post '%s' créé !\n", Title)
 	}
+
+	return nil
 }
 
-func CreateComment(PostID int, commentID int, Text string, UserID int, db*sql.DB) {
+func CreateComment( db*sql.DB, PostID int, commentID int, Text string, UserID int) (error) {
 	if commentID > 0 {
 		query := "INSERT INTO response (ID_User, ID_Rep, Text) Values (?, ?, ?)"
 			
@@ -54,11 +63,12 @@ func CreateComment(PostID int, commentID int, Text string, UserID int, db*sql.DB
 
 		if err != nil {
 			log.Printf("Erreur création commentaire : %v", err)
+			return err
 		} else {
 			fmt.Printf("Commentaire créé !\n")
 		}
 
-		return
+		return nil
 	}
 
 	if PostID > 0 {
@@ -67,8 +77,13 @@ func CreateComment(PostID int, commentID int, Text string, UserID int, db*sql.DB
 
 		if err != nil {
 			log.Printf("Erreur création commentaire : %v", err)
+			return err
 		} else {
 			fmt.Printf("Commentaire créé !\n")
 		}
+
+		return nil
 	}
+
+	return nil
 }
