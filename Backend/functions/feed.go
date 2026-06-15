@@ -42,7 +42,7 @@ type CommentResponse struct {
 
 func AddLikes(CommentID int, PostID int, UserID int, State int, db *sql.DB) (error) {
 	if PostID > 0 {
-		query := "INSERT INTO likes (ID_Post, ID_User, State) VALUES (? ? ?)"
+		query := "INSERT INTO likes (ID_Post, ID_User, State) VALUES (?, ?, ?)"
 
 		_, err := db.Exec(query, PostID, UserID, State)
 		if err != nil {
@@ -50,7 +50,7 @@ func AddLikes(CommentID int, PostID int, UserID int, State int, db *sql.DB) (err
 			return err
 		}
 	} else if CommentID > 0 {
-		query := "INSERT INTO likes (ID_Rep, ID_User, State) VALUES (? ? ?)"
+		query := "INSERT INTO likes (ID_Rep, ID_User, State) VALUES (?, ?, ?)"
 
 		_, err := db.Exec(query, CommentID, UserID, State)
 		if err != nil {

@@ -84,37 +84,72 @@ async function liveOrDemo(live, fallback) {
 // petit util pour générer un id au-dessus du max existant
 const nextId = (arr, min = 0) => Math.max(min, ...arr.map((x) => x.id)) + 1;
 
+// --- Session côté client ---
+// Le back ne gère pas de cookie de session : il renvoie juste l'IdUser au
+// login. On garde donc l'utilisateur connecté dans le navigateur. Ça permet
+// au front de passer ID_User aux routes qui l'exigent (post, topic, vote…).
+const SESSION_KEY = "agora.session.v1";
+
+function loadSession() {
+  try { return JSON.parse(localStorage.getItem(SESSION_KEY)); }
+  catch { return null; }
+}
+function saveSession(u) {
+  if (u) localStorage.setItem(SESSION_KEY, JSON.stringify(u));
+  else localStorage.removeItem(SESSION_KEY);
+}
+
+let session = loadSession(); // { id, username } ou null
+
 const store = {
   async mode() {
     return (await backendAlive()) ? "live" : "demo";
   },
 
-  me() {
-    return liveOrDemo(() => api.me(), () => demo.user);
+  // L'utilisateur courant vient du localStorage en mode live, de demo sinon.
+  async me() {
+    if (await backendAlive()) return session;
+    return demo.user;
   },
 
-  async login(email, password) {
-    if (await backendAlive()) return api.login(email, password);
-    // démo : on accepte n'importe quoi et on fabrique un pseudo depuis l'email
-    demo.user = { username: email.split("@")[0] || "membre", role: "user" };
+  // Renvoie l'id numérique de l'utilisateur connecté (0 si visiteur).
+  currentUserId() {
+    return session?.id || 0;
+  },
+
+  async login(identifier, password) {
+    if (await backendAlive()) {
+      const res = await api.login(identifier, password);
+      // le back renvoie { message, IdUser }
+      session = { id: res.IdUser, username: identifier };
+      saveSession(session);
+      return session;
+    }
+    demo.user = { username: identifier.split("@")[0] || "membre", role: "user" };
     return demo.user;
   },
 
   async register(username, email, password) {
-    if (await backendAlive()) return api.register(username, email, password);
+    if (await backendAlive()) {
+      const res = await api.register(username, email, password);
+      // le back renvoie { message, userID } puis on connecte directement
+      session = { id: res.userID, username };
+      saveSession(session);
+      return session;
+    }
     demo.user = { username, role: "user" };
     return demo.user;
   },
 
   async logout() {
-    if (await backendAlive()) {
-      try { await api.logout(); } catch {}
-    }
+    session = null;
+    saveSession(null);
     demo.user = null;
   },
 
   tags() {
-    return liveOrDemo(() => api.listTags(), () => demo.tags);
+    // Le back n'a pas (encore) de route tags : on garde la liste démo.
+    return Promise.resolve(demo.tags);
   },
 
   topics({ q, tag, sort } = {}) {
@@ -149,7 +184,7 @@ const store = {
   },
 
   async createTopic(title, body, tags) {
-    if (await backendAlive()) return api.createTopic(title, body, tags);
+    if (await backendAlive()) return api.createTopic(title, body, tags, this.currentUserId());
     const t = {
       id: nextId(demo.topics),
       title, body, tags,
@@ -164,12 +199,19 @@ const store = {
 
   posts(topicId) {
     topicId = Number(topicId);
-    return liveOrDemo(() => api.listPosts(topicId), () => demo.posts[topicId] || []);
+    // Le back ne liste pas les posts seuls : ils arrivent dans getTopic().
+    return liveOrDemo(
+      async () => {
+        const t = await api.getTopic(topicId);
+        return t.posts || [];
+      },
+      () => demo.posts[topicId] || []
+    );
   },
 
   async createPost(topicId, title, text) {
     topicId = Number(topicId);
-    if (await backendAlive()) return api.createPost(topicId, title, text);
+    if (await backendAlive()) return api.createPost(topicId, title, text, this.currentUserId());
 
     const arr = demo.posts[topicId] || (demo.posts[topicId] = []);
     const post = {
@@ -187,12 +229,19 @@ const store = {
 
   responses(postId) {
     postId = Number(postId);
-    return liveOrDemo(() => api.listResponses(postId), () => demo.responses[postId] || []);
+    // Le back renvoie les commentaires dans getPost(id).
+    return liveOrDemo(
+      async () => {
+        const d = await api.getPost(postId);
+        return d.comments || [];
+      },
+      () => demo.responses[postId] || []
+    );
   },
 
   async createResponse(postId, text, parentId) {
     postId = Number(postId);
-    if (await backendAlive()) return api.createResponse(postId, text, parentId);
+    if (await backendAlive()) return api.createResponse(postId, text, parentId, this.currentUserId());
 
     const arr = demo.responses[postId] || (demo.responses[postId] = []);
     const resp = {
@@ -206,7 +255,7 @@ const store = {
   },
 
   async vote(kind, id, value) {
-    if (await backendAlive()) return api.vote(kind, id, value);
+    if (await backendAlive()) return api.vote(kind, id, value, this.currentUserId());
 
     // En démo on modifie juste le compteur en mémoire. On cherche l'élément
     // dans tous les posts (ou toutes les réponses) puisqu'ils sont indexés

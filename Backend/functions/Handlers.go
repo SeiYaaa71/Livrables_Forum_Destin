@@ -161,11 +161,12 @@ func AddLikesHandler(c *gin.Context, db *sql.DB) {
 		return
 	}
 
-	err := AddLikes(input.PostId, input.CommentID, input.UserID, input.State, db)
+	err := AddLikes(input.CommentID, input.PostId, input.UserID, input.State, db)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "impossible d'ajouter un like",
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H {
