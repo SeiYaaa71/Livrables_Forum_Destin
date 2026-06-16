@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-
+	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,10 +25,10 @@ type TopicINput struct {
 }
 
 type PostInput struct {
-	TopicID int    `json:"ID_Topics" binding:"required"`
-	UserID  int    `json:"ID_User" binding:"required"`
-	Title   string `json:"Titre" binding:"required"`
-	Text    string `json:"Text" binding:"required"`
+    TopicID int    `json:"topic_id" binding:"required"`
+    Title   string `json:"title" binding:"required"`
+    Text    string `json:"text" binding:"required"`
+    UserID  int    `json:"user_id"` // <-- Correction appliquée
 }
 
 type CommentInput struct {
@@ -44,10 +44,10 @@ type LoginInput struct {
 }
 
 type LikeInput struct {
-	UserID    int `json:"UserId" binding:"required"`
-	PostId    int `json:"PostID"`
-	CommentID int `json:"CommentID"`
-	State     int `json:"State"`
+    PostID    int `json:"post_id"`
+    CommentID int `json:"comment_id"`
+    State     int `json:"state"`
+    UserID    int `json:"user_id"` // <-- SUPPRIMEZ le binding:"required" ici
 }
 
 // --- AJOUTEZ CE MIDDLEWARE EN HAUT DE HANDLERS.GO ---
@@ -144,55 +144,38 @@ func TopicHandler(c *gin.Context, db *sql.DB) {
 }
 
 func PostHandler(c *gin.Context, db *sql.DB) {
-    // 1. Récupération de l'identité réelle via le système de session
-    // Remplacez "userID" par la clé que vous utilisez dans votre middleware d'auth
-    userID, exists := c.Get("userID") 
-    
-    if !exists {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Vous n'êtes pas connecté."})
-        return
-    }
-    
-    // Cast sécurisé de l'ID utilisateur
-    actualUserID := userID.(int)
+	// A. Récupération de l'ID utilisateur depuis la session/token (sécurisé)
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Non autorisé. Veuillez vous connecter."})
+		return
+	}
 
-    // 2. Récupération des données du POST (Titre, Text, TopicID)
-    var input PostInput
-    if err := c.ShouldBindJSON(&input); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Données invalides."})
-        return
-    }
+	// B. Lecture des données envoyées par le JavaScript (Front-End)
+	var input PostInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		fmt.Println("🚨 ERREUR DE LECTURE DU POST :", err) // Utile pour le débogage
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Données invalides."})
+		return
+	}
 
-    // 3. Validation métier
-    if input.Title == "" || input.Text == "" {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Le titre et le texte sont obligatoires."})
-        return
-    }
+	// C. Insertion dans la base de données en utilisant l'ID de la session
+	// Assurez-vous que les noms des colonnes correspondent exactement à votre base de données (ex: ID_Topics, ID_User, Titre, Text)
+	res, err := db.Exec("INSERT INTO post (ID_Topics, ID_User, Titre, Text) VALUES (?, ?, ?, ?)",
+		input.TopicID, userID, input.Title, input.Text)
 
-    // 4. Vérification optionnelle : Le topic est-il verrouillé ?
-    var locked bool
-    err := db.QueryRow("SELECT locked FROM topics WHERE id = ?", input.TopicID).Scan(&locked)
-    if err != nil {
-        c.JSON(http.StatusNotFound, gin.H{"error": "Topic introuvable."})
-        return
-    }
-    if locked {
-        c.JSON(http.StatusForbidden, gin.H{"error": "Ce topic est verrouillé, vous ne pouvez pas répondre."})
-        return
-    }
+	if err != nil {
+		fmt.Println("🚨 ERREUR SQL INSERTION POST :", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de la création du message."})
+		return
+	}
 
-    // 5. Insertion sécurisée dans la base de données
-    // On utilise actualUserID (issu de la session) et non input.UserID (issu du JSON)
-    query := `INSERT INTO post (ID_Topics, ID_User, Titre, Text) VALUES (?, ?, ?, ?)`
-    _, err = db.Exec(query, input.TopicID, actualUserID, input.Title, input.Text)
-    
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de l'enregistrement en base de données."})
-        return
-    }
-
-    // 6. Succès
-    c.JSON(http.StatusOK, gin.H{"message": "Post publié avec succès."})
+	// D. Confirmation de succès
+	postID, _ := res.LastInsertId()
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Message publié avec succès.",
+		"post_id": postID,
+	})
 }
 
 func CommentHandler(c *gin.Context, db *sql.DB) {
@@ -257,24 +240,63 @@ func LoginHandler(c *gin.Context, db *sql.DB) {
 }
 
 func AddLikesHandler(c *gin.Context, db *sql.DB) {
+	// A. Vérification de l'identité
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Vous devez être connecté pour voter."})
+		return
+	}
+
+	// B. Lecture des données
 	var input LikeInput
-
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "donnés invalide ou incomplète"})
+		fmt.Println("🚨 ERREUR DE LECTURE DU VOTE :", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Données de vote invalides."})
 		return
 	}
 
-	err := AddLikes(input.CommentID, input.PostId, input.UserID, input.State, db)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "impossible d'ajouter un like",
-		})
+	// C. Traitement du vote
+	if input.PostID > 0 {
+		// --- VOTE SUR UN POST ---
+		_, err := db.Exec("DELETE FROM likes WHERE ID_Post = ? AND ID_User = ?", input.PostID, userID)
+		if err != nil {
+			fmt.Println("Erreur suppression ancien vote (Post):", err)
+		}
+
+		if input.State != 0 {
+			// On utilise ID_Rep avec la valeur 0 pour indiquer que ce n'est pas une réponse
+			_, err = db.Exec("INSERT INTO likes (ID_Post, ID_Rep, ID_User, State) VALUES (?, 0, ?, ?)", input.PostID, userID, input.State)
+			if err != nil {
+				fmt.Println("🚨 ERREUR INSERTION VOTE POST :", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de l'enregistrement du vote."})
+				return
+			}
+		}
+
+	} else if input.CommentID > 0 {
+		// --- VOTE SUR UNE RÉPONSE (COMMENTAIRE) ---
+		// On remplace CommentID par ID_Rep dans la requête SQL
+		_, err := db.Exec("DELETE FROM likes WHERE ID_Rep = ? AND ID_User = ?", input.CommentID, userID)
+		if err != nil {
+			fmt.Println("Erreur suppression ancien vote (Comment):", err)
+		}
+
+		if input.State != 0 {
+			// On utilise ID_Rep ici aussi
+			_, err = db.Exec("INSERT INTO likes (ID_Post, ID_Rep, ID_User, State) VALUES (0, ?, ?, ?)", input.CommentID, userID, input.State)
+			if err != nil {
+				fmt.Println("🚨 ERREUR INSERTION VOTE COMMENT :", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Erreur lors de l'enregistrement du vote."})
+				return
+			}
+		}
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Aucun ID de message ou de commentaire fourni."})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Like Ajouté",
-	})
+	// D. Réponse de succès
+	c.JSON(http.StatusOK, gin.H{"message": "Vote enregistré avec succès."})
 }
 
 func GetAllTopicsHandler(db *sql.DB) gin.HandlerFunc {
